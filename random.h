@@ -24,15 +24,15 @@ namespace random_math
 
     class JavaRand {
     private:
-        int64_t seed;
+        uint64_t seed;
     public:
         static LCG lcg;
 
         explicit JavaRand(long seed, bool scramble = true);
-        int64_t getSeed();
+        uint64_t getSeed();
         void setSeed(int64_t seed, bool scramble = true);
-        int32_t next(int32_t bits);
-        int32_t nextInt(int32_t bound);
+        uint32_t next(int32_t bits);
+        uint32_t nextInt(int32_t bound);
     };
 
 }

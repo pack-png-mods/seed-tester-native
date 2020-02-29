@@ -1,3 +1,4 @@
+#include <iostream>
 #include "generator.h"
 
 #define WATERFALL_X 14
@@ -15,23 +16,19 @@
 #define TREE3_MAX_Z WATERFALL_Z - 6
 #define THIRD_TREE_ENABLED false
 
-bool generator::ChunkGenerator::checkWaterfalls(random_math::JavaRand random)
+bool generator::ChunkGenerator::checkWaterfalls(random_math::JavaRand& random)
 {
-    for (int i = 0; i < 50; i++) {
+    for (int32_t i = 0; i < 50; i++) {
         int x = random.nextInt(16);
         int y = random.nextInt(random.nextInt(120) + 8);
         int z = random.nextInt(16);
         if (x == WATERFALL_X && y == WATERFALL_Y && z == WATERFALL_Z)
             return true;
-        if (x == WATERFALL_X) {
-            if (y <= WATERFALL_Y + 1 && y >= WATERFALL_Y && std::abs(z - WATERFALL_Z) <= 2)
-                return false;
-        }
     }
     return false;
 }
 
-void generator::ChunkGenerator::simulateDecorations(random_math::JavaRand random)
+void generator::ChunkGenerator::simulateDecorations(random_math::JavaRand& random)
 {
     random.setSeed(advance_774.next(random.getSeed()), false);
     if (random.nextInt(2) == 0) {
@@ -65,23 +62,23 @@ bool generator::ChunkGenerator::isValidTreeSpot(int treeX, int treeZ, bool first
     return false;
 }
 
-bool *generator::ChunkGenerator::generateLeafPattern(random_math::JavaRand random)
+bool *generator::ChunkGenerator::generateLeafPattern(random_math::JavaRand& random)
 {
     bool *out = new bool[16];
-    for (int i = 0; i < 16; ++i) {
+    for (int32_t i = 0; i < 16; i++) {
         out[i] = random.nextInt(2) != 0;
     }
     return out;
 }
 
-int32_t generator::ChunkGenerator::checkTrees(random_math::JavaRand random, int32_t maxTreeCount)
+int32_t generator::ChunkGenerator::checkTrees(random_math::JavaRand& random, int32_t maxTreeCount)
 {
     bool treesFound[3] = {false, false, false};
     int8_t foundTreeCount = 0;
     for (int i = 0; i <= maxTreeCount; ++i) {
-        int8_t treeX = random.nextInt(16);
-        int8_t treeZ = random.nextInt(16);
-        int8_t height = random.nextInt(3) + 4;
+        int32_t treeX = random.nextInt(16);
+        int32_t treeZ = random.nextInt(16);
+        int32_t height = random.nextInt(3) + 4;
         if (!treesFound[0] && treeX == TREE1_X && treeZ == TREE1_Z && height == TREE1_HEIGHT) {
             delete[] generator::ChunkGenerator::generateLeafPattern(random);
             foundTreeCount++;
@@ -126,7 +123,6 @@ bool generator::ChunkGenerator::populate(int64_t chunkSeed)
         return false;
 
     int64_t seed = random.getSeed();
-
     for (int i = usedTrees; i <= maxBaseTreeCount; ++i) {
         ChunkGenerator::simulateDecorations(random);
         if (ChunkGenerator::checkWaterfalls(random))

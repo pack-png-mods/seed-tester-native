@@ -4,46 +4,49 @@
 #include <algorithm>
 #include <string>
 #include <chrono>
-#include <mutex>
 
 #include "generator.h"
 
-void processor(std::ifstream& input, std::string outputFile, bool& done, uint64_t& processed, std::mutex& mtx)
+void processor(std::string& inputFile, std::string& outputFile, bool& done, uint64_t& processed, uint64_t& found)
 {
     std::ofstream output;
     output.open(outputFile);
 
+    std::ifstream input;
+    input.open(inputFile);
+
     while (input.good()) {
-        mtx.lock();
         std::string line;
-        getline(input, line);
-        mtx.unlock();
+        std::getline(input, line);
         int64_t seed = std::stoull(line);
         if (generator::ChunkGenerator::populate(seed)) {
-            processed++;
             output << line << "\n";
+            found++;
         }
+        processed++;
     }
+    done = true;
+    output.close();
+    input.close();
 }
 
 int main()
 {
-    std::ifstream input;
-    input.open("seeds.txt");
 
-    unsigned int threadCount = std::thread::hardware_concurrency() - 1;
+    unsigned int threadCount = std::thread::hardware_concurrency();
     std::thread threads[threadCount];
     bool done[threadCount];
     uint64_t processed[threadCount];
-
-    std::mutex mtx;
+    uint64_t found[threadCount];
 
     for (int i = 0; i < threadCount; ++i) {
         std::string fileName = "output" + std::to_string(i) + ".txt";
+        std::string inputName = "seeds" + std::to_string(i) + ".txt";
         done[i] = false;
         processed[i] = 0;
-        threads[i] = std::thread(processor, std::ref(input), fileName, std::ref(done[i]), std::ref(processed[i]), std::ref(mtx));
-
+        found[i] = 0;
+        std::ifstream input;
+        threads[i] = std::thread(processor, std::ref(inputName), std::ref(fileName), std::ref(done[i]), std::ref(processed[i]), std::ref(found[i]));
     }
 
     using namespace std::chrono_literals;
@@ -52,14 +55,19 @@ int main()
 
     while (!std::all_of(done, done + threadCount, [](bool d) { return d; })) {
         uint64_t processedCount = 0;
+        uint64_t foundCount = 0;
         for (int i = 0; i < threadCount; i++) {
             processedCount += processed[i];
+            foundCount += found[i];
         }
         milliseconds current = duration_cast<milliseconds>(system_clock::now().time_since_epoch());
-        long diff = (current - start).count();
+        double diff = (double)(current - start).count() / 1000;
 
-        std::cout << "Processed " << processedCount << " seeds, uptime: " << diff << "s, speed: " << processedCount / diff << std::endl;
-        std::this_thread::sleep_for(1s);
+        if (diff != 0)
+            std::cout << "Processed " << processedCount << " seeds, found " << foundCount << " correct ones, uptime: "
+                << diff << "s, speed: " << (processedCount / diff) / 1000000 << "m seed/sec, percentage of correct seeds: "
+                << (double)foundCount / processedCount * 100 << "%" << std::endl;
+        std::this_thread::sleep_for(0.5s);
 
     }
 

@@ -26,7 +26,7 @@ void processor(const std::string inputFile, const std::string outputFile, bool& 
             std::cout << line << std::endl;
         }
         int usedTrees = 0;
-        if (generator::ChunkGenerator::populate(seed, &usedTrees, waterfallX)) {
+        if (generator::ChunkGenerator::populate(seed, &usedTrees, waterfallX + 16)) {
             output << line << "; " << usedTrees << "\n";
             found++;
         }
